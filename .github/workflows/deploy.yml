@@ -28,7 +28,7 @@ jobs:
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
           DOCKER_IMAGE: "anilupdocker/anil-test:latest"
         run: |
-          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker stop docker-test && docker rm docker-test || true"
-          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker pull $DOCKER_IMAGE"
-          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker run -d --name docker-test -p 8080:8080 $DOCKER_IMAGE"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker stop docker-test && docker rm docker-test || true"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker pull $DOCKER_IMAGE"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker run -d --name docker-test -p 8080:8080 $DOCKER_IMAGE"
 
