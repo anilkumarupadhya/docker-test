@@ -1,1 +1,34 @@
-###########
+name: Deploy Docker container
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Build and push Docker image
+        env:
+          DOCKER_IMAGE: "anilkumarupadhya/docker-test:latest"
+        run: |
+          docker build -t $DOCKER_IMAGE .
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker push $DOCKER_IMAGE
+      - name: Deploy Docker container
+        env:
+          SSH_HOST: "3.92.3.210"
+          SSH_PORT: "22"
+          SSH_USERNAME: "anil"
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+          DOCKER_IMAGE: "anilkumarupadhya/docker-test:latest"
+        run: |
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker stop docker-test && docker rm docker-test || true"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker pull $DOCKER_IMAGE"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker run -d --name docker-test -p 80:80 $DOCKER_IMAGE"
+
