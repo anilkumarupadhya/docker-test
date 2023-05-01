@@ -1,0 +1,90 @@
+i have writen a cron job including lambda cloudwatch  to start and stop a server .
+server date time is in UTC  and in cloud watch time is also in UTC  .but server not stopped
+
+
+Code logic: Double-check the code logic of the Lambda function to ensure that it is correctly starting and stopping the server. 
+Make sure that the function is using the correct AWS SDK calls to start and stop the server.
+
+Permissions: Check the IAM roles and policies associated with the Lambda function to ensure that it has the necessary permissions to start
+ and stop the server. It should have permission to call the EC2 API to start and stop the server. so what is coorect .write in example 
+
+Timezone: Make sure that the server's timezone and the CloudWatch rule's timezone are both set to UTC. 
+If they are not, there may be a discrepancy in the times used to start and stop the server.
+
+CloudWatch rule: Double-check the CloudWatch rule to ensure that it is triggering the Lambda function at the expected times. 
+Check the rule's cron expression and make sure that it is correct.
+
+EC2 instance state: Check the state of the EC2 instance to ensure that it can be stopped. If the instance is in a state
+ where it cannot be stopped, such as a pending state or a shutting down state, then the Lambda function will not be able to stop it.
+
+By checking these possible issues, you should be able to identify the cause of the problem and fix it.
+
+
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Start*",
+        "ec2:Stop*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+
+@@@@@@@@@@@@@@
+
+import boto3
+region = 'us-west-1'
+instances = ['i-12345cb6de4f78g9h', 'i-08ce9b2d7eccf6d26']
+ec2 = boto3.client('ec2', region_name=region)
+
+def lambda_handler(event, context):
+    ec2.stop_instances(InstanceIds=instances)
+    print('stopped your instances: ' + str(instances))
+
+Start the instances:-
+import boto3
+region = 'us-west-1'
+instances = ['i-12345cb6de4f78g9h', 'i-08ce9b2d7eccf6d26']
+ec2 = boto3.client('ec2', region_name=region)
+
+def lambda_handler(event, context):
+    ec2.start_instances(InstanceIds=instances)
+    print('started your instances: ' + str(instances))
+
+
+
+@@@@@@@@@@@@@@@@@@@@@@@
+
+
+Dear Sir,
+
+My name is Anil, and I work as a DevOps engineer. I would like to request a knowledge transfer session with Mr. Rahul. 
+I had previously scheduled a G-Meet with him, but unfortunately, we were unable to connect as I waited for his call.
+
+I would appreciate it if you could schedule a new G-Meet session according to your feasibility.
+Thank you for your assistance in this matter.
+
+Best regards,
+Anil
+
+
+
+
+
+
+
+
