@@ -11,6 +11,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Download kubeconfig for EKS cluster
+        run: |
+          mkdir -p ~/.kube
+          aws eks update-kubeconfig --region us-east-1 --name exam-dev --kubeconfig ~/.kube/config
+
       - name: Set up AWS credentials and update kubeconfig
         uses: aws-actions/configure-aws-credentials@v1
         with:
