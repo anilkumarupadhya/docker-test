@@ -1,0 +1,39 @@
+name: Deploy to ECR and run on EC2
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Login to Amazon ECR
+        run: |
+          export AWS_ECR_REGISTRY_ID=$(aws ecr describe-registry --query 'registryId' --output text)
+          export AWS_ECR_REGISTRY=$(aws ecr describe-registry --registry-ids $AWS_ECR_REGISTRY_ID --query 'registries[0].aliases[0].name' --output text)
+          echo ${{ secrets.AWS_ECR_PASSWORD }} | docker login -u AWS --password-stdin $AWS_ECR_REGISTRY
+      - name: Build and push Docker image
+        env:
+          ECR_REPO: "ef-test-k8s"
+          IMAGE_TAG: "latest"
+        run: |
+          docker build -t $ECR_REPO:$IMAGE_TAG .
+          docker tag $ECR_REPO:$IMAGE_TAG $AWS_ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+          docker push $AWS_ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+      - name: Deploy Docker container
+        env:
+          SSH_HOST: "3.92.3.210"
+          SSH_PORT: "22"
+          SSH_USERNAME: "anil"
+        run: |
+          ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker stop <YOUR_CONTAINER_NAME> && docker rm <YOUR_CONTAINER_NAME> || true"
+          ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker pull $AWS_ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG"
+          ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker run -d --name <YOUR_CONTAINER_NAME> -p <YOUR_CONTAINER_PORT>:<YOUR_HOST_PORT> $AWS_ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG"
