@@ -21,7 +21,7 @@ jobs:
 
       - name: Log in to Amazon ECR
         id: login-ecr
-        run: echo AWS_ECR_REGISTRY_ID=$(aws ecr describe-registries --query 'registries[0].registryId' --output text) AWS_ECR_REGISTRY=$(aws ecr describe-registries --registry-ids ${AWS_ECR_REGISTRY_ID} --query 'registries[0].aliases[0].name' --output text) && echo ${{ secrets.AWS_ACCESS_KEY_ID }} && echo ${{ secrets.AWS_SECRET_ACCESS_KEY }} && AWS_LOGIN=$(aws ecr get-login-password --region <YOUR_AWS_REGION>) && echo $AWS_LOGIN && docker login -u AWS -p $AWS_LOGIN $AWS_ECR_REGISTRY
+        run: echo AWS_ECR_REGISTRY_ID=$(aws ecr describe-registry --query 'registries[0].registryId' --output text) AWS_ECR_REGISTRY=$(aws ecr describe-registry --registry-ids ${AWS_ECR_REGISTRY_ID} --query 'registries[0].aliases[0].name' --output text) && echo ${{ secrets.AWS_ACCESS_KEY_ID }} && echo ${{ secrets.AWS_SECRET_ACCESS_KEY }} && AWS_LOGIN=$(aws ecr get-login-password --region <YOUR_AWS_REGION>) && echo $AWS_LOGIN && docker login -u AWS -p $AWS_LOGIN $AWS_ECR_REGISTRY
 
       - name: Build and push Docker image
         env:
