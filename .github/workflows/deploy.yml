@@ -1,4 +1,4 @@
-name: Deploy to ECR and run on EC2
+name: Deploy Docker container
 on:
   push:
     branches:
@@ -9,31 +9,31 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Configure AWS credentials
+      - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
       - name: Login to Amazon ECR
-        run: |
-          export AWS_ECR_REGISTRY_ID=$(aws ecr describe-registry --query 'registryId' --output text)
-          export AWS_ECR_REGISTRY=$(aws ecr describe-registry --registry-ids $AWS_ECR_REGISTRY_ID --query 'registries[0].aliases[0].name' --output text)
-          echo ${{ secrets.AWS_ECR_PASSWORD }} | docker login -u AWS --password-stdin $AWS_ECR_REGISTRY
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
       - name: Build and push Docker image
         env:
-          ECR_REPO: "ef-test-k8s"
-          IMAGE_TAG: "latest"
+          DOCKER_IMAGE: public.ecr.aws/h9h2s9e6/ef-test-k8s:latest
         run: |
-          docker build -t $ECR_REPO:$IMAGE_TAG .
-          docker tag $ECR_REPO:$IMAGE_TAG $AWS_ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
-          docker push $AWS_ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+          docker build -t $DOCKER_IMAGE .
+          docker tag $DOCKER_IMAGE $DOCKER_IMAGE
+          docker push $DOCKER_IMAGE
       - name: Deploy Docker container
         env:
           SSH_HOST: "3.92.3.210"
           SSH_PORT: "22"
           SSH_USERNAME: "anil"
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+          DOCKER_IMAGE: public.ecr.aws/h9h2s9e6/ef-test-k8s:latest
         run: |
-          ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker stop <YOUR_CONTAINER_NAME> && docker rm <YOUR_CONTAINER_NAME> || true"
-          ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker pull $AWS_ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG"
-          ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker run -d --name <YOUR_CONTAINER_NAME> -p <YOUR_CONTAINER_PORT>:<YOUR_HOST_PORT> $AWS_ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker stop docker-test && docker rm docker-test || true"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <YOUR_ECR_REPOSITORY_URI>"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker pull $DOCKER_IMAGE"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker run -d --name docker-test -p 80:80 $DOCKER_IMAGE"
