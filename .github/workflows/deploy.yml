@@ -34,6 +34,7 @@ jobs:
           DOCKER_IMAGE: public.ecr.aws/h9h2s9e6/ef-test-k8s:latest
         run: |
           sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker stop docker-test && docker rm docker-test || true"
-          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <YOUR_ECR_REPOSITORY_URI>"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) 590951457535.dkr.ecr.us-east-1.amazonaws.com"
+
           sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker pull $DOCKER_IMAGE"
           sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "docker run -d --name docker-test -p 80:80 $DOCKER_IMAGE"
