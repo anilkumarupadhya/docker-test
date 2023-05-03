@@ -67,7 +67,7 @@ jobs:
                   - name: $K8S_DEPLOYMENT_NAME
                     image: $DOCKER_IMAGE
                     ports:
-                      - containerPort: 8080
+                      - containerPort: 5000
           ---
           apiVersion: v2
           kind: Service
@@ -78,7 +78,7 @@ jobs:
               app: $K8S_DEPLOYMENT_NAME
             ports:
               - protocol: TCP
-                port: 8080
-                targetPort: 8080
+                port: 5000
+                targetPort: 5000
             type: LoadBalancer
           EOF
