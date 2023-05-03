@@ -26,7 +26,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           eks-region: us-east-1
-          eks-cluster-name: exam-dev
+          eks-cluster-name: dev
           aws-region: us-east-1
 
       - name: Login to Amazon ECR
