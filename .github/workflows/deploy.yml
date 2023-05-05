@@ -1,4 +1,4 @@
-name: Deploy Docker container to EKS
+name: Deploy Docker container to Kubernetes
 
 on:
   push:
@@ -22,12 +22,11 @@ jobs:
           aws-region: us-east-1
       
 
-      - name: Update kubeconfig for EKS cluster
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          eks-region: us-east-1
-          eks-cluster-name: dev-exam
-          aws-region: us-east-1
+      - name: Update kubeconfig for Kubernetes cluster
+        run: |
+          mkdir -p $HOME/.kube
+          echo '${{ secrets.KUBECONFIG_DATA }}' | base64 -d > $HOME/.kube/config
+          sed -i 's|server:.*|server: https://<your-cluster-ip>:6443|g' $HOME/.kube/config
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -39,7 +38,7 @@ jobs:
           docker build -t $DOCKER_IMAGE .
           docker tag $DOCKER_IMAGE $DOCKER_IMAGE
           docker push $DOCKER_IMAGE
-      - name: Deploy to EKS cluster
+      - name: Deploy to Kubernetes cluster
         env:
           K8S_NAMESPACE: default
           K8S_DEPLOYMENT_NAME: docker-test
