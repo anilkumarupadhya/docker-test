@@ -26,7 +26,7 @@ jobs:
         run: |
           mkdir -p $HOME/.kube
           echo '${{ secrets.KUBECONFIG_DATA }}' | base64 -d > $HOME/.kube/config
-          sed -i 's|server:.*|server: https://10.3.0.238:6443|g' $HOME/.k10.3.0.238ube/config
+          sed -i 's|server:.*|server: https://10.3.0.238:6443|g' $HOME/.kube/config
 
       - name: Login to Amazon ECR
         id: login-ecr
