@@ -22,7 +22,7 @@ jobs:
           aws-region: us-east-1
       
 
-      - name: Update kubeconfig for Kubernetes cluste
+      - name: Update kubeconfig for Kubernetes cluster
         run: |
           mkdir -p $HOME/.kube
           echo '${{ secrets.KUBECONFIG_DATA }}' | base64 -d > $HOME/.kube/config
