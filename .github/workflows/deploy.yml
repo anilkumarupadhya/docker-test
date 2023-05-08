@@ -8,32 +8,47 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-    
-    - name: Login to ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
     
     - name: Build and push Docker image to ECR
-      id: build-and-push
-      env:
-        ECR_REGISTRY: 590951457535.dkr.ecr.us-east-1.amazonaws.com
-        ECR_REPOSITORY: ef-test-k8s
-        IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        env:
-          AWS_REGION: us-east-1
+        docker build -t 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s:${{ github.sha }} .
+        docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) 590951457535.dkr.ecr.us-east-1.amazonaws.com
+        docker push 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s:${{ github.sha }}
     
-    - name: Deploy to EKS
-      uses: appleboy/kubectl-action@master
+    - name: Deploy to EKS dev-exam cluster
+      uses: steebchen/kubectl@v1.0.0
       with:
-        args: |
-          set image deployment/my-app my-app=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          -n dev-exam
-      env:
-        KUBECONFIG: ${{ secrets.KUBECONFIG }}
+        command: apply
+        manifest: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: my-app
+            labels:
+              app: my-app
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: my-app
+            template:
+              metadata:
+                labels:
+                  app: my-app
+              spec:
+                containers:
+                  - name: my-app
+                    image: 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s:${{ github.sha }}
+                    imagePullPolicy: Always
+        kubeconfig: ${{ secrets.KUBECONFIG }}
