@@ -46,12 +46,11 @@ jobs:
 
       - name: Deploy to Amazon EKS
         if: steps.build-image.outputs.digest != ''
-        uses: appleboy/ssh-action@master
+        uses: aws-actions/amazon-eks-deploy@v1
         with:
-          host: ${{ env.EKS_CLUSTER_NAME }}
-          username: ${{ secrets.EKS_SSH_USERNAME }}
-          key: ${{ secrets.EKS_SSH_PRIVATE_KEY }}
-          port: ${{ secrets.EKS_SSH_PORT }}
-          script: |
-            docker pull ${{ env.ECR_URI }}:${{ github.sha }}
-            # Additional deployment steps here
+          eks-cluster-name: ${{ env.EKS_CLUSTER_NAME }}
+          image: ${{ env.ECR_URI }}:${{ github.sha }}
+          image-pull-policy: Always
+          namespace: default
+          command: |
+            # Additional deployment commands here
