@@ -6,12 +6,13 @@ on:
       - main
 
 env:
-  AWS_REGION: us-east-1
-  ECR_REPOSITORY: ef-test-k8s
-  IMAGE_TAG: ${{ github.sha }}
-  EKS_CLUSTER: dev-exam
-  #EKS_NAMESPACE: my-namespace
-  KUBECONFIG: ${{ secrets.KUBECONFIG }}
+   AWS_REGION: us-east-1
+   ECR_REPOSITORY: ef-test-k8s
+   DOCKER_REGISTRY_TOKEN: ${{ secrets.DOCKER_REGISTRY }}
+   IMAGE_TAG: ${{ github.sha }}
+   EKS_CLUSTER: dev-exam
+   #EKS_NAMESPACE: my-namespace
+   KUBECONFIG: ${{ secrets.KUBECONFIG }}
 
 jobs:
   build-and-push:
@@ -31,6 +32,8 @@ jobs:
       - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+      
+
 
       - name: Build and tag Docker image
         id: build-image
