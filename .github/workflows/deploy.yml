@@ -41,8 +41,8 @@ jobs:
       - name: Push Docker image to Amazon ECR
         if: steps.build-image.outputs.digest != ''
         run: |
-          docker tag ${{ steps.build-image.outputs.image }} ${{ env.ECR_URI }}:${{ github.sha }}
-          docker push ${{ env.ECR_URI }}:${{ github.sha }}
+         docker tag ${{ steps.build-image.outputs.image }} ${{ env.ECR_URI }}:${{ github.sha }}
+         docker push ${{ env.ECR_URI }}:${{ github.sha }}
 
       - name: Configure kubectl
         run: |
