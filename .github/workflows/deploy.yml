@@ -6,13 +6,14 @@ on:
       - main
 
 env:
-   AWS_REGION: us-east-1
-   ECR_REPOSITORY: ef-test-k8s
-   DOCKER_REGISTRY_TOKEN: ${{ secrets.DOCKER_REGISTRY }}
-   IMAGE_TAG: ${{ github.sha }}
-   EKS_CLUSTER: dev-exam
-   #EKS_NAMESPACE: my-namespace
-   KUBECONFIG: ${{ secrets.KUBECONFIG }}
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: ef-test-k8s
+  DOCKER_REGISTRY: 590951457535.dkr.ecr.<region>.amazonaws.com
+  DOCKER_REGISTRY_TOKEN: ${{ secrets.DOCKER_REGISTRY }}
+  IMAGE_TAG: ${{ github.sha }}
+  EKS_CLUSTER: dev-exam
+  #EKS_NAMESPACE: my-namespace
+  KUBECONFIG: ${{ secrets.KUBECONFIG }}
 
 jobs:
   build-and-push:
@@ -21,19 +22,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-           aws-region: us-east-1
-
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
       - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-      
-
 
       - name: Build and tag Docker image
         id: build-image
@@ -42,19 +41,16 @@ jobs:
           context: .
           push: false
           tags: ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-
       - name: Push Docker image to ECR
         uses: docker/build-push-action@v2
         with:
-          context: .
-          push: true
-          
-          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-          secrets:
-              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          tags: ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-          registry: ${{ steps.login-ecr.outputs.registry }}
+         context: .
+         push: true
+         tags: ${{ env.DOCKER_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+         secrets:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            registry: ${{ steps.login-ecr.outputs.registry }}
 
       - name: Update Kubernetes Deployment
         uses: appleboy/ssh-action@master
@@ -67,3 +63,4 @@ jobs:
             kubectl config use-context ${{ env.EKS_CLUSTER }}
             kubectl config set-context ${{ env.EKS_CLUSTER }} --namespace=${{ env.EKS_NAMESPACE }}
             kubectl set image deployment/my-deployment my-container=${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+  
