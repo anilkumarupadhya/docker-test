@@ -44,13 +44,12 @@ jobs:
           docker tag ${{ steps.build-image.outputs.image }} ${{ env.ECR_URI }}:${{ github.sha }}
           docker push ${{ env.ECR_URI }}:${{ github.sha }}
 
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo '${{ secrets.KUBECONFIG_CONTENTS }}' | base64 -d > ~/.kube/config
+
       - name: Deploy to Amazon EKS
         if: steps.build-image.outputs.digest != ''
-        uses: aws-actions/amazon-eks-deploy@v1
-        with:
-          eks-cluster-name: ${{ env.EKS_CLUSTER_NAME }}
-          image: ${{ env.ECR_URI }}:${{ github.sha }}
-          image-pull-policy: Always
-          namespace: default
-          command: |
-            # Additional deployment commands here
+        run: |
+          kubectl set image deployment/my-deployment my-container=${{ env.ECR_URI }}:${{ github.sha }}
