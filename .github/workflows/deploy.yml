@@ -1,54 +1,57 @@
-name: Deploy to EKS dev-exam cluster
+name: Docker ECR and EKS Deployment
 
 on:
   push:
     branches:
       - main
 
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: 590951457535
+  ECR_URI: 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s
+  EKS_CLUSTER_NAME: DEV-EKS
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-      
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-    
-    - name: Build and push Docker image to ECR
-      run: |
-        docker build -t 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s:${{ github.sha }} .
-        docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) 590951457535.dkr.ecr.us-east-1.amazonaws.com
-        docker push 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s:${{ github.sha }}
-    
-    - name: Deploy to EKS dev-exam cluster
-      uses: steebchen/kubectl@v1.0.0
-      with:
-        command: apply
-        manifest: |
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: my-app
-            labels:
-              app: my-app
-          spec:
-            replicas: 1
-            selector:
-              matchLabels:
-                app: my-app
-            template:
-              metadata:
-                labels:
-                  app: my-app
-              spec:
-                containers:
-                  - name: my-app
-                    image: 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s:${{ github.sha }}
-                    imagePullPolicy: Always
-        kubeconfig: ${{ secrets.KUBECONFIG }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and tag Docker image
+        id: build-image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: false
+          tags: ${{ env.ECR_URI }}:${{ github.sha }}
+
+      - name: Push Docker image to Amazon ECR
+        if: steps.build-image.outputs.digest != ''
+        run: |
+          docker tag ${{ steps.build-image.outputs.image }} ${{ env.ECR_URI }}:${{ github.sha }}
+          docker push ${{ env.ECR_URI }}:${{ github.sha }}
+
+      - name: Deploy to Amazon EKS
+        if: steps.build-image.outputs.digest != ''
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.EKS_CLUSTER_NAME }}
+          username: ${{ secrets.EKS_SSH_USERNAME }}
+          key: ${{ secrets.EKS_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.EKS_SSH_PORT }}
+          script: |
+            docker pull ${{ env.ECR_URI }}:${{ github.sha }}
+            # Additional deployment steps here
