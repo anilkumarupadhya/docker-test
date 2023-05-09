@@ -27,7 +27,7 @@ jobs:
         uses: docker://bitnami/kubectl:1.22.0-debian-10-r0
         with:
          args: |
-           alias kubectl="docker run --rm -it -v $HOME/.kube:/root/.kube bitnami/kubectl:1.22.0-debian-10-r0"
+           kubectl="docker run --rm -it -v $HOME/.kube:/root/.kube bitnami/kubectl:1.22.0-debian-10-r0"
 
 
       
