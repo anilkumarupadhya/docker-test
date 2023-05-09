@@ -23,11 +23,12 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-
       - name: Set up kubectl
-        uses: dawidd6/action-kubectl@v1
+        uses: dawidd6/action-kubectl@v1.2
         with:
           kubectl-version: '1.22.0'
+
+      
           
       - name: Use EKS context
         run: |
