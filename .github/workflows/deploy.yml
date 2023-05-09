@@ -45,17 +45,7 @@ jobs:
             AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
 
       - name: Deploy to EKS
-        uses: docker://amazon/aws-cli:2.0.6
-        with:
-          entrypoint: sh
-          args:
-            - -c
-            - |
-              aws eks --region ${{ env.AWS_REGION }} update-kubeconfig --name dev-exam
-              kubectl apply -f kubernetes/deployment.yaml
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }}
