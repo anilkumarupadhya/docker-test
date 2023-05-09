@@ -10,7 +10,7 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   
-  EKS_CLUSTER_NAME: anil@dev-exam.us-east-1.eksctl.io
+  EKS_CLUSTER_NAME: dev-exam
   AWS_REGION: us-east-1
 
   
