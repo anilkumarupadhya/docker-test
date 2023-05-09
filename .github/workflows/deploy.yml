@@ -24,7 +24,9 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
         with:
           registry: ${{ env.ECR_REGISTRY }}
-          aws-region: ${{ env.AWS_REGION }}
+          registry-type: AWS
+          http-proxy: ${{ secrets.HTTP_PROXY }}
+          skip-logout: true
 
       - name: Build Docker Image
         id: build_image
@@ -46,6 +48,11 @@ jobs:
 
       - name: Deploy to EKS
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }}
+          aws eks --region ${{ env.AWS_REGION }} update-kubeconfig --name dev-exam
+          kubectl apply -f kubernetes/deployment.yaml
