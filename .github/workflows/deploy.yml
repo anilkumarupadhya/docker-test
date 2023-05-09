@@ -10,11 +10,14 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   
+  EKS_CLUSTER_NAME: dev-stage
   AWS_REGION: us-east-1
+
+  
   ECR_REGISTRY: 590951457535.dkr.ecr.us-east-1.amazonaws.com
   ECR_REPOSITORY: ef-test-k8s
   IMAGE_TAG: ${{ github.sha }}
-  EKS_CLUSTER_NAME: dev-stage
+  
   KUBECTL: docker run --rm -it -v $HOME/.kube:/root/.kube bitnami/kubectl:1.22.0-debian-10-r0
   
 jobs:
