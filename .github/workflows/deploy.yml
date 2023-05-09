@@ -36,7 +36,6 @@ jobs:
           
       - name: Use EKS context
         run: |
-          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
           kubectl config use-context ${{ env.EKS_CLUSTER_NAME }}
 
 
