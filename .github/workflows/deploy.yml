@@ -17,26 +17,25 @@ env:
   EKS_CLUSTER_NAME: dev-stage
   
 jobs:
-   build:
+  build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-
       - name: Set up kubectl
-        uses: aws/k8s-set-context@v1.2.0
+        uses: docker://bitnami/kubectl:1.22.0-debian-10-r0
         with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBECONFIG }}
+         args: |
+           alias kubectl="docker run --rm -it -v $HOME/.kube:/root/.kube bitnami/kubectl:1.22.0-debian-10-r0"
 
-      - name: Install kubectl
+
+      
+          
+      - name: Use EKS context
         run: |
-          sudo apt-get update && sudo apt-get install -y apt-transport-https gnupg2
-          curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-          echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-          sudo apt-get update
-          sudo apt-get install -y kubectl
-
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+          kubectl config use-context ${{ env.EKS_CLUSTER_NAME }}
 
 
           
