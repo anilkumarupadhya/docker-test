@@ -15,25 +15,30 @@ env:
   ECR_REPOSITORY: ef-test-k8s
   IMAGE_TAG: ${{ github.sha }}
   EKS_CLUSTER_NAME: dev-stage
-
+  
 jobs:
-  build:
+   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-      - name: Set up kubectl
-        uses: dawidd6/action-kubectl@v1.2
-        with:
-          kubectl-version: '1.22.0'
 
-      
-          
-      - name: Use EKS context
+      - name: Set up kubectl
+        uses: aws/k8s-set-context@v1.2.0
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Install kubectl
         run: |
-          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
-          kubectl config use-context ${{ env.EKS_CLUSTER_NAME }}
+          sudo apt-get update && sudo apt-get install -y apt-transport-https gnupg2
+          curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+          echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+          sudo apt-get update
+          sudo apt-get install -y kubectl
+
+
+
           
       - name: Login to ECR
         id: ecr_login
