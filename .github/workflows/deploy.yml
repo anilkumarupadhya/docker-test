@@ -6,6 +6,11 @@ on:
       - main
 
 env:
+  AWS_SDK_LOAD_CONFIG: 1
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+
   AWS_REGION: us-east-1
   ECR_REGISTRY: 590951457535.dkr.ecr.us-east-1.amazonaws.com
   ECR_REPOSITORY: ef-test-k8s
