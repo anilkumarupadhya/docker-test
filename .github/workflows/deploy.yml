@@ -15,6 +15,7 @@ env:
   ECR_REPOSITORY: ef-test-k8s
   IMAGE_TAG: ${{ github.sha }}
   EKS_CLUSTER_NAME: dev-stage
+  KUBECTL: docker run --rm -it -v $HOME/.kube:/root/.kube bitnami/kubectl:1.22.0-debian-10-r0
   
 jobs:
   build:
@@ -25,9 +26,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Set up kubectl
         uses: docker://bitnami/kubectl:1.22.0-debian-10-r0
-        with:
-         args: |
-           kubectl="docker run --rm -it -v $HOME/.kube:/root/.kube bitnami/kubectl:1.22.0-debian-10-r0"
+  env:
+    KUBECTL: docker run --rm -it -v $HOME/.kube:/root/.kube bitnami/kubectl:1.22.0-debian-10-r0
 
 
       
