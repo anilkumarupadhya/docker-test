@@ -26,8 +26,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Set up kubectl
         uses: docker://bitnami/kubectl:1.22.0-debian-10-r0
-  env:
-    KUBECTL: docker run --rm -it -v $HOME/.kube:/root/.kube bitnami/kubectl:1.22.0-debian-10-r0
+  
 
 
       
