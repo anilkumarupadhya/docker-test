@@ -1,56 +1,35 @@
-name: Docker ECR and EKS Deployment
-
+name: Build and Push Docker Image to ECR
 on:
   push:
     branches:
       - main
-
-env:
-  AWS_REGION: us-east-1
-  AWS_ACCOUNT_ID: 590951457535
-  ECR_URI: 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s
-  EKS_CLUSTER_NAME: DEV-EKS
-
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build and tag Docker image
-        id: build-image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: false
-          tags: ${{ env.ECR_URI }}:${{ github.sha }}
-
-      - name: Push Docker image to Amazon ECR
-        if: steps.build-image.outputs.digest != ''
-        run: |
-         docker tag ${{ steps.build-image.outputs.image }} 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s:${{ github.sha }}
-         docker push 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s:${{ github.sha }}
-
-
-      - name: Configure kubectl
-        run: |
-          mkdir -p ~/.kube
-          echo '${{ secrets.KUBECONFIG_CONTENTS }}' | base64 -d > ~/.kube/config
-
-      - name: Deploy to Amazon EKS
-        if: steps.build-image.outputs.digest != ''
-        run: |
-          kubectl set image deployment/my-deployment my-container=${{ env.ECR_URI }}:${{ github.sha }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+      with:
+        registry: 590951457535.dkr.ecr.us-east-1.amazonaws.com
+        region: ${{ secrets.AWS_REGION }}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Build Docker Image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: |
+          590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s:${{ github.sha }}
+      env:
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Logout of Amazon ECR
+      if: always()
+      run: |
+        aws ecr get-login-password --region us-east-1 | docker logout
