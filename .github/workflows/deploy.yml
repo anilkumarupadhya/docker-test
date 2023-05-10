@@ -31,16 +31,18 @@ jobs:
         run: |
           docker build -t $DOCKER_IMAGE .
           docker push $DOCKER_IMAGE
-
       - name: Deploy Docker container
         env:
-          SSH_HOST: "107.23.36.44"
-          SSH_PORT: "22"
-          SSH_USERNAME: "anil"
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-          DOCKER_IMAGE: 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s:${{ github.sha }}
+         SSH_HOST: "107.23.36.44"
+         SSH_PORT: "22"
+         SSH_USERNAME: "anil"
+         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+         DOCKER_IMAGE: 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s:${{ github.sha }}
         run: |
           sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker stop docker-test && docker rm docker-test || true"
           sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker login -u AWS -p $(aws ecr get-login-password --region us-east-1) 590951457535.dkr.ecr.us-east-1.amazonaws.com"
           sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker pull $DOCKER_IMAGE"
-          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker run -d --name docker-test -p 8080:8080 $DOCKER_IMAGE"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker run -d --name docker-test --rm -p 8080:8080 $DOCKER_IMAGE"
+
+
+      
