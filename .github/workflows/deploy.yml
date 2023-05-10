@@ -37,7 +37,7 @@ jobs:
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
           DOCKER_IMAGE: 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s
         run: |
-          sshpass -p $SSH_PASSWORD ssh -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker stop docker-test && docker rm docker-test || true"
-          sshpass -p $SSH_PASSWORD ssh -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker login -u AWS -p \$(aws ecr get-login-password --region us-east-1) 590951457535.dkr.ecr.us-east-1.amazonaws.com"
-          sshpass -p $SSH_PASSWORD ssh -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker pull $DOCKER_IMAGE"
-          sshpass -p $SSH_PASSWORD ssh -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker run -d --name docker-test -p 8080:8080 $DOCKER_IMAGE"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker stop docker-test && docker rm docker-test || true"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker login -u AWS -p \$(aws ecr get-login-password --region us-east-1) 590951457535.dkr.ecr.us-east-1.amazonaws.com"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker pull $DOCKER_IMAGE"
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker run -d --name docker-test -p 8080:8080 $DOCKER_IMAGE"
