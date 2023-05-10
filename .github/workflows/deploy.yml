@@ -1,73 +1,35 @@
-name: Build, Push, and Deploy
+steps:
+  - name: Checkout code
+    uses: actions/checkout@v2
 
-on:
-  push:
-    branches:
-      - main
+  - name: Set up AWS credentials
+    uses: aws-actions/configure-aws-credentials@v1
+    with:
+      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      aws-region: us-east-1
 
-env:
-  AWS_SDK_LOAD_CONFIG: 1
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  
-  EKS_CLUSTER_NAME: dev-exam
-  AWS_REGION: us-east-1
+  - name: Login to Amazon ECR
+    id: login-ecr
+    uses: aws-actions/amazon-ecr-login@v1
 
-  
-  ECR_REGISTRY: 590951457535.dkr.ecr.us-east-1.amazonaws.com
-  ECR_REPOSITORY: ef-test-k8s
-  IMAGE_TAG: ${{ github.sha }}
-  
-  KUBECTL: docker run --rm -it -v $HOME/.kube:/root/.kube bitnami/kubectl:1.22.0-debian-10-r0
-  
-jobs:
-  build:
-    runs-on: ubuntu-latest
+  - name: Build and push Docker image
+    env:
+      DOCKER_IMAGE: 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s
+    run: |
+      docker build -t $DOCKER_IMAGE .
+      docker tag $DOCKER_IMAGE $DOCKER_IMAGE
+      docker push $DOCKER_IMAGE
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Set up kubectl
-        uses: docker://bitnami/kubectl:1.22.0-debian-10-r0
-  
-
-
-      
-          
-      - name: Use EKS context
-        run: |
-          kubectl config use-context ${{ env.EKS_CLUSTER_NAME }}
-
-
-          
-      - name: Login to ECR
-        id: ecr_login
-        uses: aws-actions/amazon-ecr-login@v1
-        with:
-          registry: ${{ env.ECR_REGISTRY }}
-          registry-type: private
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Build Docker Image
-        id: build_image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: false
-          tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-
-      - name: Push Docker Image to ECR
-        id: push_image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-          build-args: |
-            AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
-
-      - name: Deploy to EKS
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }}
+  - name: Deploy Docker container
+    env:
+      SSH_HOST: "3.92.3.210"
+      SSH_PORT: "22"
+      SSH_USERNAME: "anil"
+      SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+      DOCKER_IMAGE: 590951457535.dkr.ecr.us-east-1.amazonaws.com/ef-test-k8s
+    run: |
+      sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker stop docker-test && docker rm docker-test || true"
+      sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker login -u AWS -p \$(aws ecr get-login-password --region us-east-1) 590951457535.dkr.ecr.us-east-1.amazonaws.com"
+      sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker pull $DOCKER_IMAGE"
+      sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_HOST "sudo docker run -d --name docker-test -p 8080:8080 $DOCKER_IMAGE"
